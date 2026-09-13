@@ -21,17 +21,16 @@ Traditional World of Warcraft private-server repacks are distributed as monolith
 
 ---
 
-## 🚦 Current Status (Phase 1)
+## 🚦 Current Status (Phase 2 Complete)
 
 > [!IMPORTANT]
-> **Phase 1: Build & Runtime Infrastructure**  
-> This initial phase establishes the build pipelines, multi-stage Dockerfiles, Compose orchestration, volume management, and operational documentation.  
-> **Not included in Phase 1:**
-> - Proprietary client game data (`maps`, `vmaps`, `mmaps`, `dbc`)
-> - Populated World database contents / custom gameplay SQL dumps
-> - Custom gameplay `.conf` tuning overrides
+> **Phase 2: Game Data Integration Complete**  
+> All client game assets (DBCs, terrain maps, collision vmaps, cinematic cameras, and Ascension custom DBCs) have been integrated and verified with `ac-worldserver`.
 > 
-> These assets will be integrated in subsequent phases. In Phase 1, the infrastructure compiles the source, spins up the database, initializes the core schemas, and boots the daemons to a ready-state awaiting data.
+> **Phase 3 (Next Phase):**
+> - Production `.conf` overrides
+> - World database gameplay content baseline
+> - Account creation automation and realm network configuration
 
 ---
 
@@ -136,10 +135,65 @@ CoA-Docker/
 │       ├── Dockerfile        # Multi-stage build (builder, runtime, auth, world, db-import)
 │       └── entrypoint.sh     # Service bootstrapping and permission validator
 ├── scripts/
-│   ├── repack.sh             # Command-line helper for repack management
+│   ├── repack.sh             # Linux/macOS management CLI
+│   ├── repack.ps1            # Windows PowerShell management CLI
+│   ├── download-data.sh      # Bash script to download/extract game data
+│   ├── download-data.ps1     # PowerShell script to download/extract game data
+│   ├── validate-data.sh      # Bash script to validate game data presence and counts
+│   ├── validate-data.ps1     # PowerShell script to validate game data presence and counts
 │   └── console.sh            # One-click worldserver console attach script
 ├── source/                   # Git submodule: AzerothCore Conquest of Azeroth source tree
-└── data/                     # Host mount directory for Phase 2 game data (maps, vmaps, dbc)
+└── data/                     # Host mount directory for game data (maps, vmaps, dbc)
+    ├── Cameras/              # 14 cinematic flyby camera definitions
+    ├── dbc/                  # 249 client database definitions (including dbc/Ascension/)
+    ├── maps/                 # 5,744 extracted terrain map files
+    ├── vmaps/                # 12,494 extracted line-of-sight and height trees
+    └── mmaps/                # Movement pathfinding navmeshes (optional)
+```
+
+---
+
+## 📦 Game Data
+
+### Overview
+AzerothCore and the Conquest of Azeroth module require client game data to calculate spell geometry, line of sight, pathfinding, item displays, and custom class talents.
+
+### Source & Distribution
+- **Official Asset URL:** [https://github.com/d3athbl0w/CoA-Docker/releases/download/master/Data.zip](https://github.com/d3athbl0w/CoA-Docker/releases/download/master/Data.zip)
+- **Compressed Size:** ~466.05 MB (`488,692,531` bytes)
+- **Uncompressed Size:** ~1.15 GB (`1,233,084,259` bytes) across 18,501 files
+- **SHA-256 Checksum:** `92ba82ebc19ba820e004e8d4d4b89ee7c415d9e4124d92f29312f0e049c61079`
+
+### Directory Layout
+The archive unpacks directly into the `./data/` host directory:
+- `data/dbc/`: Standard WoW 3.3.5a client database files (`AreaTable.dbc`, `Spell.dbc`, `ItemSet.dbc`, etc.).
+- `data/dbc/Ascension/`: Custom Conquest of Azeroth DBCs (`Appearances.dbc`, `ItemAppearances.dbc`, `VanityCollection.dbc`).
+- `data/maps/`: 5,744 terrain map files (e.g. `0004331.map`).
+- `data/vmaps/`: 12,494 building and collision geometry trees (`*.vmtree`, `*.vmtile`).
+- `data/Cameras/`: 14 cinematic flyby camera files (`FlyByBloodElf.m2`, etc.).
+- `data/mmaps/`: Movement map navmeshes (optional; gracefully handled by the core when not present).
+
+### Why Game Data Stays Outside Git and Docker Images
+1. **Zero Git Bloat:** Keeping 1.2 GB of static game data out of Git prevents repository cloning bloat.
+2. **Lean Docker Images:** The `coa/ac-worldserver` image remains under 180 MB instead of swelling to over 1.4 GB.
+3. **Instant Rebuilds:** Modifying C++ code or pulling core updates re-links in seconds without invalidating or re-copying gigabytes of game data layers.
+4. **Host Transparency:** Developers can inspect or patch custom DBC files directly on the host.
+
+### How to Install and Verify
+Automated scripts are provided for all operating systems:
+```bash
+# On Linux / macOS:
+./scripts/repack.sh download-data
+./scripts/repack.sh validate-data
+
+# On Windows (PowerShell):
+.\scripts\repack.ps1 download-data
+.\scripts\repack.ps1 validate-data
+```
+The data is mounted into `ac-worldserver` as a read-only volume:
+```yaml
+volumes:
+  - ${DOCKER_VOL_DATA:-./data}:/azerothcore/env/dist/data:ro
 ```
 
 ---

@@ -100,6 +100,7 @@ services:
       AC_LOGIN_DATABASE_INFO: "ac-database;3306;root;${DOCKER_DB_ROOT_PASSWORD:-password};${AC_AUTH_DATABASE:-acore_auth}"
       AC_WORLD_DATABASE_INFO: "ac-database;3306;root;${DOCKER_DB_ROOT_PASSWORD:-password};${AC_WORLD_DATABASE:-acore_world}"
       AC_CHARACTER_DATABASE_INFO: "ac-database;3306;root;${DOCKER_DB_ROOT_PASSWORD:-password};${AC_CHARACTERS_DATABASE:-acore_characters}"
+      AC_ASCENSION_COMPAT_DBC_DIRECTORY: "/azerothcore/env/dist/data/dbc/Ascension"
     volumes:
       - ${DOCKER_VOL_ETC:-ac-server-etc}:/azerothcore/env/dist/etc
       - ${DOCKER_VOL_LOGS:-ac-server-logs}:/azerothcore/env/dist/logs

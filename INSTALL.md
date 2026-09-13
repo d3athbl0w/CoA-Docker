@@ -8,14 +8,15 @@ This guide walks you through setting up and running the AzerothCore Conquest of 
 1. [Prerequisites](#1-prerequisites)
 2. [Cloning the Repository](#2-cloning-the-repository)
 3. [Environment Configuration](#3-environment-configuration)
-4. [Building the Docker Images](#4-building-the-docker-images)
-5. [Starting the Servers](#5-starting-the-servers)
-6. [Monitoring & Verification](#6-monitoring--verification)
-7. [Interacting with the World Console](#7-interacting-with-the-world-console)
-8. [Stopping & Restarting](#8-stopping--restarting)
-9. [Rebuilding After Code Changes](#9-rebuilding-after-code-changes)
-10. [Container Teardown vs. Volume Removal](#10-container-teardown-vs-volume-removal)
-11. [Troubleshooting & FAQ](#11-troubleshooting--faq)
+4. [Downloading & Installing Game Data](#4-downloading--installing-game-data)
+5. [Building the Docker Images](#5-building-the-docker-images)
+6. [Starting the Servers](#6-starting-the-servers)
+7. [Monitoring & Verification](#7-monitoring--verification)
+8. [Interacting with the World Console](#8-interacting-with-the-world-console)
+9. [Stopping & Restarting](#9-stopping--restarting)
+10. [Rebuilding After Code Changes](#10-rebuilding-after-code-changes)
+11. [Container Teardown vs. Volume Removal](#11-container-teardown-vs-volume-removal)
+12. [Troubleshooting & FAQ](#12-troubleshooting--faq)
 
 ---
 
@@ -64,7 +65,7 @@ Before starting, install the required software for your operating system:
 This repack incorporates the AzerothCore source tree as a Git submodule. Always clone with `--recurse-submodules`:
 
 ```bash
-git clone --recurse-submodules https://github.com/jealous-sound/azerothcore-wotlk-coa.git CoA-Docker
+git clone --recurse-submodules https://github.com/d3athbl0w/CoA-Docker.git CoA-Docker
 cd CoA-Docker
 ```
 
@@ -85,21 +86,59 @@ The environment configuration file stores passwords, port mappings, user IDs, an
    ```bash
    cp .env.example .env
    ```
-   *(On Windows Command Prompt: `copy .env.example .env`)*
+   *(On Windows Command Prompt or PowerShell: `copy .env.example .env`)*
 
-2. Open `.env` in any text editor (e.g., Notepad, VS Code, nano). Review the default values:
+2. Open `.env` in any text editor. Review the default values:
    - `DOCKER_DB_ROOT_PASSWORD`: The root password for MySQL (default: `password`). Change this for production use!
-   - `DOCKER_DB_EXTERNAL_PORT`: Port exposed to your host machine for database tools (default: `3306`).
+   - `DOCKER_DB_EXTERNAL_PORT`: Port exposed on host for database tools (default: `3306`).
    - `DOCKER_AUTH_EXTERNAL_PORT`: Port for WoW client authentication (default: `3724`).
    - `DOCKER_WORLD_EXTERNAL_PORT`: Port for WoW realm connections (default: `8085`).
 
 ---
 
-## 4. Building the Docker Images
+## 4. Downloading & Installing Game Data
+
+AzerothCore requires extracted client DBCs, terrain maps, collision vmaps, and cameras to run. The official Conquest of Azeroth dataset is bundled in `Data.zip`.
+
+### Automated Setup (Recommended)
+Run the automated repack setup script, which initializes the submodules, downloads `Data.zip`, verifies the SHA256 checksum, and validates all extracted files:
+
+```bash
+# On Linux / macOS:
+./scripts/repack.sh setup
+
+# On Windows (PowerShell):
+.\scripts\repack.ps1 setup
+```
+
+### Manual Download & Verification
+If you prefer step-by-step control:
+```bash
+# Linux / macOS:
+./scripts/download-data.sh
+./scripts/validate-data.sh
+
+# Windows (PowerShell):
+.\scripts\download-data.ps1
+.\scripts\validate-data.ps1
+```
+
+Validation will confirm that all directories (`data/dbc`, `data/dbc/Ascension`, `data/maps`, `data/vmaps`, `data/Cameras`) are present with over 18,500 total game assets.
+
+---
+
+## 5. Building the Docker Images
 
 Compile AzerothCore and create your container images:
 
 ```bash
+# Linux / macOS:
+./scripts/repack.sh build
+
+# Windows (PowerShell):
+.\scripts\repack.ps1 build
+
+# Or directly via Docker Compose:
 docker compose build
 ```
 
@@ -115,7 +154,7 @@ docker compose build
 
 ---
 
-## 5. Starting the Servers
+## 6. Starting the Servers
 
 Once the build finishes, start the complete stack in detached (background) mode:
 
@@ -131,7 +170,7 @@ docker compose up -d
 
 ---
 
-## 6. Monitoring & Verification
+## 7. Monitoring & Verification
 
 ### Checking Container Status
 Check whether all services are running:
@@ -166,7 +205,7 @@ To exit log following, press `CTRL + C`.
 
 ---
 
-## 7. Interacting with the World Console
+## 8. Interacting with the World Console
 
 The World Server features an interactive in-game administration console (for running commands like `server info`, `account create`, etc.).
 
@@ -187,7 +226,7 @@ Or run the helper script:
 
 ---
 
-## 8. Stopping & Restarting
+## 9. Stopping & Restarting
 
 ### Stopping the Servers
 To pause or shut down the containers gracefully:
@@ -207,7 +246,7 @@ docker compose restart
 
 ---
 
-## 9. Rebuilding After Code Changes
+## 10. Rebuilding After Code Changes
 
 If you pull new commits into `source/` or modify C++ files:
 ```bash
@@ -222,7 +261,7 @@ Because BuildKit caches object files in a persistent compiler cache volume, subs
 
 ---
 
-## 10. Container Teardown vs. Volume Removal
+## 11. Container Teardown vs. Volume Removal
 
 It is essential to understand the difference between stopping containers and wiping volumes:
 
@@ -246,11 +285,11 @@ docker compose down -v
 
 ---
 
-## 11. Troubleshooting & FAQ
+## 12. Troubleshooting & FAQ
 
-### Q: `ac-worldserver` logs say `Unable to open dbc/...` or `Maps directory not found`.
-**Cause:** You are running Phase 1. In Phase 1, client game data (`maps`, `vmaps`, `mmaps`, `dbc`) is intentionally not yet bundled.  
-**Solution:** This is normal and expected for Phase 1. Phase 2 will provide the game data mount pipeline and world baseline.
+### Q: `ac-worldserver` logs say `Unable to open dbc/...` or `Failed to find map files`.
+**Cause:** Game data has not been extracted into the `data/` directory.  
+**Solution:** Run `./scripts/repack.sh download-data` (Linux/macOS) or `.\scripts\repack.ps1 download-data` (Windows) to automatically fetch and unpack the verified dataset. Run `validate-data` to confirm.
 
 ### Q: `docker compose up` fails with `port 3306 already in use`.
 **Cause:** A local MySQL or MariaDB instance is already running on your host machine on port 3306.  

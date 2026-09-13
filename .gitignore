@@ -26,6 +26,7 @@ data/*.rar
 data/*.mpq
 
 # Build artifacts and caches
+downloads/
 build/
 var/
 bin/

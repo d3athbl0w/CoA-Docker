@@ -13,6 +13,12 @@ TEMP_DIR="${AC_TEMP_DIR:-/azerothcore/env/dist/temp}"
 # Ensure required directories exist
 mkdir -p "$CONF_DIR" "$LOGS_DIR" "$DATA_DIR" "$TEMP_DIR" 2>/dev/null || true
 
+# Maintain compatibility between /azerothcore/data and $DATA_DIR
+if [ -d "$DATA_DIR/dbc" ] && [ ! -d "/azerothcore/data/dbc" ]; then
+    rmdir /azerothcore/data 2>/dev/null || true
+    ln -sfn "$DATA_DIR" /azerothcore/data 2>/dev/null || true
+fi
+
 # Test write permissions
 if ! touch "$CONF_DIR/.perm_test" 2>/dev/null || ! touch "$LOGS_DIR/.perm_test" 2>/dev/null; then
     cat <<'EOF'
