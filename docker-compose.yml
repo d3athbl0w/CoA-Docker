@@ -1,0 +1,122 @@
+services:
+  ac-database:
+    container_name: ac-database
+    image: mysql:8.4
+    networks:
+      - ac-network
+    ports:
+      - "${DOCKER_DB_EXTERNAL_PORT:-3306}:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DOCKER_DB_ROOT_PASSWORD:-password}
+    volumes:
+      - ${DOCKER_VOL_DB:-ac-database-data}:/var/lib/mysql
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "/usr/bin/mysqladmin ping -h localhost -u root -p$${MYSQL_ROOT_PASSWORD}"]
+      interval: 5s
+      timeout: 10s
+      retries: 30
+      start_period: 15s
+
+  ac-db-import:
+    container_name: ac-db-import
+    image: coa/ac-db-import:${DOCKER_IMAGE_TAG:-latest}
+    build:
+      context: .
+      dockerfile: docker/server/Dockerfile
+      target: db-import
+      args:
+        USER_ID: ${DOCKER_USER_ID:-1000}
+        GROUP_ID: ${DOCKER_GROUP_ID:-1000}
+        DOCKER_USER: ${DOCKER_USER:-acore}
+        SOURCE_PATH: source
+    networks:
+      - ac-network
+    environment:
+      AC_DATA_DIR: "/azerothcore/env/dist/data"
+      AC_LOGS_DIR: "/azerothcore/env/dist/logs"
+      AC_LOGIN_DATABASE_INFO: "ac-database;3306;root;${DOCKER_DB_ROOT_PASSWORD:-password};${AC_AUTH_DATABASE:-acore_auth}"
+      AC_WORLD_DATABASE_INFO: "ac-database;3306;root;${DOCKER_DB_ROOT_PASSWORD:-password};${AC_WORLD_DATABASE:-acore_world}"
+      AC_CHARACTER_DATABASE_INFO: "ac-database;3306;root;${DOCKER_DB_ROOT_PASSWORD:-password};${AC_CHARACTERS_DATABASE:-acore_characters}"
+    volumes:
+      - ${DOCKER_VOL_ETC:-ac-server-etc}:/azerothcore/env/dist/etc
+      - ${DOCKER_VOL_LOGS:-ac-server-logs}:/azerothcore/env/dist/logs
+    depends_on:
+      ac-database:
+        condition: service_healthy
+
+  ac-authserver:
+    container_name: ac-authserver
+    image: coa/ac-authserver:${DOCKER_IMAGE_TAG:-latest}
+    build:
+      context: .
+      dockerfile: docker/server/Dockerfile
+      target: authserver
+      args:
+        USER_ID: ${DOCKER_USER_ID:-1000}
+        GROUP_ID: ${DOCKER_GROUP_ID:-1000}
+        DOCKER_USER: ${DOCKER_USER:-acore}
+        SOURCE_PATH: source
+    networks:
+      - ac-network
+    ports:
+      - "${DOCKER_AUTH_EXTERNAL_PORT:-3724}:3724"
+    environment:
+      AC_LOGS_DIR: "/azerothcore/env/dist/logs"
+      AC_TEMP_DIR: "/azerothcore/env/dist/temp"
+      AC_LOGIN_DATABASE_INFO: "ac-database;3306;root;${DOCKER_DB_ROOT_PASSWORD:-password};${AC_AUTH_DATABASE:-acore_auth}"
+    volumes:
+      - ${DOCKER_VOL_ETC:-ac-server-etc}:/azerothcore/env/dist/etc
+      - ${DOCKER_VOL_LOGS:-ac-server-logs}:/azerothcore/env/dist/logs
+    restart: unless-stopped
+    depends_on:
+      ac-database:
+        condition: service_healthy
+      ac-db-import:
+        condition: service_completed_successfully
+
+  ac-worldserver:
+    container_name: ac-worldserver
+    image: coa/ac-worldserver:${DOCKER_IMAGE_TAG:-latest}
+    build:
+      context: .
+      dockerfile: docker/server/Dockerfile
+      target: worldserver
+      args:
+        USER_ID: ${DOCKER_USER_ID:-1000}
+        GROUP_ID: ${DOCKER_GROUP_ID:-1000}
+        DOCKER_USER: ${DOCKER_USER:-acore}
+        SOURCE_PATH: source
+    networks:
+      - ac-network
+    stdin_open: true
+    tty: true
+    ports:
+      - "${DOCKER_WORLD_EXTERNAL_PORT:-8085}:8085"
+      - "${DOCKER_SOAP_EXTERNAL_PORT:-7878}:7878"
+    environment:
+      AC_DATA_DIR: "/azerothcore/env/dist/data"
+      AC_LOGS_DIR: "/azerothcore/env/dist/logs"
+      AC_LOGIN_DATABASE_INFO: "ac-database;3306;root;${DOCKER_DB_ROOT_PASSWORD:-password};${AC_AUTH_DATABASE:-acore_auth}"
+      AC_WORLD_DATABASE_INFO: "ac-database;3306;root;${DOCKER_DB_ROOT_PASSWORD:-password};${AC_WORLD_DATABASE:-acore_world}"
+      AC_CHARACTER_DATABASE_INFO: "ac-database;3306;root;${DOCKER_DB_ROOT_PASSWORD:-password};${AC_CHARACTERS_DATABASE:-acore_characters}"
+    volumes:
+      - ${DOCKER_VOL_ETC:-ac-server-etc}:/azerothcore/env/dist/etc
+      - ${DOCKER_VOL_LOGS:-ac-server-logs}:/azerothcore/env/dist/logs
+      - ${DOCKER_VOL_DATA:-./data}:/azerothcore/env/dist/data:ro
+    restart: unless-stopped
+    depends_on:
+      ac-database:
+        condition: service_healthy
+      ac-db-import:
+        condition: service_completed_successfully
+
+volumes:
+  ac-database-data:
+  ac-server-etc:
+  ac-server-logs:
+
+networks:
+  ac-network:
+    name: ac-network
+    driver: bridge

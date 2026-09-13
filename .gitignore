@@ -1,0 +1,54 @@
+# Environment and secret files
+.env
+!.env.example
+
+# Server configurations (preserve folder structure, ignore actual confs if placed here)
+env/etc/*.conf
+!env/etc/.gitkeep
+env/dist/
+env/logs/
+!env/logs/.gitkeep
+
+# Host client data (maps, vmaps, mmaps, dbc extracted files)
+data/Cameras/*
+!data/Cameras/.gitkeep
+data/dbc/*
+!data/dbc/.gitkeep
+data/maps/*
+!data/maps/.gitkeep
+data/mmaps/*
+!data/mmaps/.gitkeep
+data/vmaps/*
+!data/vmaps/.gitkeep
+data/*.zip
+data/*.7z
+data/*.rar
+data/*.mpq
+
+# Build artifacts and caches
+build/
+var/
+bin/
+ccache/
+.cache/
+CMakeLists.txt.user
+CMakeCache.txt
+CMakeFiles/
+cmake-build-*/
+
+# Logs and temporary files
+*.log
+*.pid
+*.tmp
+*.bak
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE and editor settings
+.vscode/
+.idea/
+*.swp
+*~
