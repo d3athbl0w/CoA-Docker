@@ -137,7 +137,8 @@ CoA-Docker/
 ├── INSTALL.md                # Beginner-friendly step-by-step installation guide
 ├── docs/
 │   ├── DATABASE.md           # Detailed database architecture, schema & installation guide
-│   └── PORTAINER.md          # Comprehensive Portainer web deployment guide
+│   ├── PORTAINER.md          # Comprehensive Portainer web deployment guide
+│   └── UPDATING.md           # Upgrade, maintenance, and backup guide (Docker & Portainer)
 ├── config/                   # Host-mounted server configuration files
 │   ├── authserver.conf       # Active authserver runtime configuration
 │   ├── authserver.conf.dist  # Reference template from core source
@@ -301,6 +302,14 @@ For a complete technical analysis of the database engine, table inventories, cus
 For a complete step-by-step tutorial on deploying this repack to remote servers via **Portainer**, exporting images, resolving port conflicts, and configuring live console access from the browser, refer to:
 
 👉 **[docs/PORTAINER.md](docs/PORTAINER.md)**
+
+---
+
+## 🔄 Maintenance & Update Guide
+
+For standard operating procedures on updating C++ server binaries, compiling and importing container images into Portainer, applying database schema migrations, updating game data assets, upgrading Portainer CE, and executing disaster recovery rollbacks, refer to:
+
+👉 **[docs/UPDATING.md](docs/UPDATING.md)**
 
 
 

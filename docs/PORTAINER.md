@@ -1,4 +1,4 @@
-﻿# 🚢 Portainer Deployment & Operator Guide — Conquest of Azeroth (CoA) Docker Repack
+# 🚢 Portainer Deployment & Operator Guide — Conquest of Azeroth (CoA) Docker Repack
 
 This comprehensive guide walks you through deploying the **AzerothCore WotLK / Conquest of Azeroth (CoA)** server repack on a remote server managed with **Portainer** (Community Edition or Business Edition). It covers the complete operational workflow from local image export to resolving common port, submodule, and database initialization hurdles.
 
@@ -324,3 +324,11 @@ By default, AzerothCore registers the realm address as `127.0.0.1`. For external
 ### Error 5: Missing Game Content (Empty World / No CoA Quests or Custom Classes)
 - **Root Cause:** MySQL initialized empty schemas without the Conquest of Azeroth content database.
 - **Solution:** In Phase 3B, restore the official CoA clean snapshot (`Database/Clean/databases.sql.gz`), which populates all custom classes (IDs 12–32), custom appearances, quest templates, and default GM account credentials (`local` / `local`).
+
+---
+
+## 📚 Related Documentation
+
+- 🗄️ **[Database Architecture & Schema Guide](DATABASE.md):** Deep dive into CoA custom schemas, Ascension collections, and manual SQL imports.
+- 🔄 **[Maintenance & Update Guide](UPDATING.md):** Step-by-step procedures for updating server images, applying migrations, updating Portainer CE, and disaster recovery.
+
