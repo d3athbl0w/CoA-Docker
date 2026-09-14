@@ -136,7 +136,8 @@ CoA-Docker/
 ├── README.md                 # Primary project documentation (this file)
 ├── INSTALL.md                # Beginner-friendly step-by-step installation guide
 ├── docs/
-│   └── DATABASE.md           # Detailed database architecture, schema & installation guide
+│   ├── DATABASE.md           # Detailed database architecture, schema & installation guide
+│   └── PORTAINER.md          # Comprehensive Portainer web deployment guide
 ├── config/                   # Host-mounted server configuration files
 │   ├── authserver.conf       # Active authserver runtime configuration
 │   ├── authserver.conf.dist  # Reference template from core source
@@ -292,6 +293,15 @@ config/
 For a complete technical analysis of the database engine, table inventories, custom CoA/Ascension schemas (`ascension_custom_class`, `account_appearance_collection`), the repack snapshot restore process, and Docker administration procedures, refer to:
 
 👉 **[docs/DATABASE.md](docs/DATABASE.md)**
+
+---
+
+## 🚢 Portainer Deployment Guide
+
+For a complete step-by-step tutorial on deploying this repack to remote servers via **Portainer**, exporting images, resolving port conflicts, and configuring live console access from the browser, refer to:
+
+👉 **[docs/PORTAINER.md](docs/PORTAINER.md)**
+
 
 
 ---
