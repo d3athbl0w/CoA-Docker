@@ -125,6 +125,11 @@ If you prefer step-by-step control:
 
 Validation will confirm that all directories (`data/dbc`, `data/dbc/Ascension`, `data/maps`, `data/vmaps`, `data/Cameras`) are present with over 18,500 total game assets.
 
+> [!NOTE]
+> **Zero-Touch Container Auto-Bootstrap (`ac-data-init`):**  
+> If you are deploying via Portainer, remote VPS, or CI environments without running local setup scripts, the included `ac-data-init` container automatically detects missing data, downloads `Data.zip` (~466 MB), validates its SHA-256 checksum, and extracts it into the data volume before starting `ac-worldserver`.
+
+
 ---
 
 ## 5. Building the Docker Images

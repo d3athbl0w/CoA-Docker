@@ -112,6 +112,50 @@ services:
         condition: service_healthy
       ac-db-import:
         condition: service_completed_successfully
+      ac-data-init:
+        condition: service_completed_successfully
+
+  ac-data-init:
+    container_name: ac-data-init
+    image: alpine:3.20
+    restart: "no"
+    networks:
+      - ac-network
+    volumes:
+      - ${DOCKER_VOL_DATA:-./data}:/azerothcore/env/dist/data
+    environment:
+      DATA_URL: "https://github.com/d3athbl0w/CoA-Docker/releases/download/master/Data.zip"
+      EXPECTED_SHA256: "92ba82ebc19ba820e004e8d4d4b89ee7c415d9e4124d92f29312f0e049c61079"
+    command:
+      - sh
+      - -c
+      - |
+        set -eu
+        TARGET_DIR="/azerothcore/env/dist/data"
+        if [ -f "$$TARGET_DIR/dbc/AreaTable.dbc" ] && [ -f "$$TARGET_DIR/dbc/Ascension/Appearances.dbc" ]; then
+          echo "[ac-data-init] Game data already present in $$TARGET_DIR. Skipping download."
+          exit 0
+        fi
+
+        echo "[ac-data-init] Game data missing or incomplete in $$TARGET_DIR."
+        echo "[ac-data-init] Installing download utilities..."
+        apk add --no-cache curl unzip ca-certificates
+
+        mkdir -p "$$TARGET_DIR" /tmp/coa-downloads
+        ARCHIVE="/tmp/coa-downloads/Data.zip"
+
+        echo "[ac-data-init] Downloading CoA Game Data (~466 MB) from $$DATA_URL..."
+        curl -L -f --progress-bar -o "$$ARCHIVE" "$$DATA_URL"
+
+        echo "[ac-data-init] Verifying SHA-256 checksum..."
+        echo "$$EXPECTED_SHA256  $$ARCHIVE" | sha256sum -c -
+
+        echo "[ac-data-init] Extracting game data into $$TARGET_DIR..."
+        unzip -o -q "$$ARCHIVE" -d "$$TARGET_DIR"
+        rm -rf /tmp/coa-downloads
+
+        echo "[ac-data-init] Game data bootstrap completed successfully."
+
 
 volumes:
   ac-database-data:

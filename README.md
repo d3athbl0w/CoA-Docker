@@ -66,27 +66,30 @@ graph TD
     subgraph Compose ["Docker Compose Environment (ac-network)"]
         DB[("ac-database\n(MySQL 8.4 LTS)")]
         DBImport["ac-db-import\n(AzerothCore dbimport tool)"]
+        DataInit["ac-data-init\n(Game Data Auto-Bootstrap)"]
         Auth["ac-authserver\n(Port 3724)"]
-        World["ac-worldserver\n(Ports 8085, 7878)"]
+        World["ac-worldserver\n(Ports 8085, 7878, 3443)"]
     end
 
-    subgraph Volumes ["Docker Named Volumes"]
+    subgraph Volumes ["Docker Named Volumes & Host Mounts"]
         VolDB[("ac-database-data")]
-        VolData[("ac-client-data")]
-        VolEtc[("ac-server-etc")]
-        VolLogs[("ac-server-logs")]
+        VolData[("./data\n(Client Assets)")]
+        VolEtc[("./config\n(Host Config)")]
+        VolLogs[("./logs\n(Runtime Logs)")]
     end
 
     %% Networking
     Admin -->|Port 3306| DB
     Client -->|Port 3724 TCP| Auth
     Client -->|Port 8085 TCP| World
-    HostCLI -->|docker attach| World
+    HostCLI -->|docker attach / Port 3443| World
 
     %% Service dependencies
     DBImport -.->|depends on healthy| DB
     Auth -.->|depends on completed| DBImport
+    DataInit -.->|provisions assets| VolData
     World -.->|depends on completed| DBImport
+    World -.->|depends on completed| DataInit
 
     %% Volume mounts
     DB --- VolDB
@@ -109,13 +112,19 @@ graph TD
    - Connects to `ac-database`, automatically runs database creation scripts (`data/sql/create/create_mysql.sql`), imports base tables, and applies incremental SQL updates from core and modules.
    - Shuts down gracefully upon task completion.
 
-3. **`ac-authserver` (Realmlist & Authentication):**
+3. **`ac-data-init` (Game Data Auto-Bootstrap):**
+   - Autonomous Alpine container ensuring zero-intervention stack deployment (e.g. in Portainer).
+   - Verifies whether DBCs, maps, and vmaps are present in `${DOCKER_VOL_DATA}`.
+   - If missing, downloads `Data.zip`, validates its SHA-256 hash, extracts 1.15 GB of game data, and cleans up archives.
+   - If data already exists, skips downloading and exits immediately with code 0.
+
+4. **`ac-authserver` (Realmlist & Authentication):**
    - Handles account authentication, password verification (SRP6), and realm list redirection.
    - Listens on TCP port `3724`.
 
-4. **`ac-worldserver` (World Engine):**
+5. **`ac-worldserver` (World Engine):**
    - Executes game logic, player sessions, combat mechanics, spells, and custom CoA module logic.
-   - Listens on TCP port `8085` (game connection) and port `7878` (SOAP remote management).
+   - Listens on TCP port `8085` (game connection), port `7878` (SOAP), and port `3443` (RA Console).
    - Configured with `stdin_open: true` and `tty: true` to allow live host attachment to the interactive console.
 
 ---
