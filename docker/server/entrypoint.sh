@@ -11,7 +11,7 @@ DATA_DIR="${AC_DATA_DIR:-/azerothcore/env/dist/data}"
 TEMP_DIR="${AC_TEMP_DIR:-/azerothcore/env/dist/temp}"
 
 # Ensure required directories exist
-mkdir -p "$CONF_DIR" "$LOGS_DIR" "$DATA_DIR" "$TEMP_DIR" 2>/dev/null || true
+mkdir -p "$CONF_DIR" "$LOGS_DIR" "$LOGS_DIR/reports" "$DATA_DIR" "$TEMP_DIR" 2>/dev/null || true
 
 # Maintain compatibility between /azerothcore/data and $DATA_DIR
 if [ -d "$DATA_DIR/dbc" ] && [ ! -d "/azerothcore/data/dbc" ]; then
